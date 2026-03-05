@@ -1,0 +1,25 @@
+{
+  "name": "pgmonitor-ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev":     "vite",
+    "build":   "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@microsoft/signalr": "^8.0.7",
+    "chart.js":           "^4.4.4",
+    "svelte-chartjs":     "^3.1.5",
+    "svelte-spa-router":  "^4.0.1"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.1.2",
+    "autoprefixer":                 "^10.4.19",
+    "postcss":                      "^8.4.39",
+    "svelte":                       "^4.2.18",
+    "tailwindcss":                  "^3.4.6",
+    "vite":                         "^5.3.4"
+  }
+}

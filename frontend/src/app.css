@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THEME — edit only this block to restyle the entire application
+   ─────────────────────────────────────────────────────────────────────────
+   Current theme: "Slate" — soft light, easy on the eyes.
+
+   Quick-swap ideas:
+     Dark (original)  →  --color-bg: #0a0e1a  --color-surface: #0f1729
+     Warm parchment   →  --color-bg: #fdf6ec  --color-surface: #fef9f3
+     True white       →  --color-bg: #ffffff  --color-surface: #f8f9fb
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* Backgrounds */
+  --color-bg: #fef9f3;   /* page background                        */
+  --color-surface:      #fef9f3;   /* card / panel background                */
+
+  /* Borders */
+  --color-border:       #d0dae6;   /* default border                         */
+  --color-border-hover: #b0bfce;   /* hovered border                         */
+
+  /* Text */
+  --color-text:         #1e2d3d;   /* primary text — dark navy, not pure black */
+  --color-muted: #2853c2;   /* secondary / dimmed text                */
+
+  /* Accent palette — toned down for light backgrounds */
+  --color-accent:       #0077cc;   /* primary accent (blue)                  */
+  --color-green:        #1a8f5a;   /* success / good                         */
+  --color-yellow:       #b86e00;   /* warning (amber, readable on light)     */
+  --color-red: #f10d20;   /* error / critical                       */
+
+  /* RGB triplets — required for Tailwind opacity modifiers (bg-accent/20 etc.)
+     Keep these in sync with the hex values above.                            */
+  --color-bg-rgb:           240, 244, 248;
+  --color-surface-rgb:      255, 255, 255;
+  --color-border-rgb:       208, 218, 230;
+  --color-accent-rgb:       0,   119, 204;
+  --color-green-rgb:        26,  143,  90;
+  --color-yellow-rgb:       184, 110,   0;
+  --color-red-rgb:          214,  60,  74;
+  --color-muted-rgb:        107, 127, 150;
+  --color-text-rgb:          30,  45,  61;
+
+  /* Glow radii (used by .glow-* helpers) */
+  --glow-accent: 0 0 10px rgba(0, 119, 204, 0.18);
+  --glow-green:  0 0 10px rgba(26, 143,  90, 0.18);
+  --glow-red:    0 0 10px rgba(214, 60,  74, 0.18);
+
+  /* Typography */
+  --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+
+  color-scheme: light;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE RESET
+   ═══════════════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar              { width: 6px; height: 6px; }
+::-webkit-scrollbar-track        { background: var(--color-bg); }
+::-webkit-scrollbar-thumb        { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover  { background: var(--color-border-hover); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPOGRAPHY HELPERS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.font-mono    { font-family: var(--font-mono); }
+.font-display { font-family: var(--font-display); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORM ELEMENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+textarea, input, select {
+  background:    var(--color-surface);
+  color:         var(--color-text);
+  border:        1px solid var(--color-border);
+  border-radius: 4px;
+  outline:       none;
+  font-family:   var(--font-mono);
+}
+textarea:focus, input:focus, select:focus {
+  border-color: var(--color-accent);
+}
+
+button {
+  cursor:      pointer;
+  font-family: var(--font-body);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GLOW UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.glow-accent { box-shadow: var(--glow-accent); }
+.glow-green  { box-shadow: var(--glow-green);  }
+.glow-red    { box-shadow: var(--glow-red);    }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes blink {
+  0%, 100% { opacity: 1;   }
+  50%      { opacity: 0.4; }
+}
+.blink { animation: blink 1.5s ease-in-out infinite; }
+
+@keyframes scan {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}

@@ -1,0 +1,36 @@
+# ── .NET / F# ─────────────────────────────────────────────────────────────────
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.DotSettings.user
+TestResults/
+
+# ── Node / Svelte / Vite ──────────────────────────────────────────────────────
+node_modules/
+dist/
+.svelte-kit/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# ── Environment / secrets ─────────────────────────────────────────────────────
+appsettings.Development.json
+appsettings.Production.json
+*.pfx
+*.p12
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+.docker/
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/settings.json
+*.ncrunchproject
