@@ -141,6 +141,4 @@ All endpoints (except `/api/auth/login`) require `Authorization: Bearer <token>`
 
 1. **JWT secret** — set a strong key in `appsettings.json` or via env var `Jwt__Key`
 2. **Connection string** — `ConnectionStrings__Postgres` env var
-3. **Users** — replace the in-memory dict in `Auth.fs` with a proper user table
-4. **TLS** — put Nginx/Caddy in front for HTTPS
-5. **Alert persistence** — replace in-memory `Alerts.fs` with a PostgreSQL-backed store
+3. **TLS** — put Nginx/Caddy in front for HTTPS

@@ -63,8 +63,8 @@
 
       <div class="space-y-4">
         <div>
-          <label class="block text-xs text-muted mb-1 font-display uppercase tracking-wider">Username</label>
-          <input
+          <label for="un" class="block text-xs text-muted mb-1 font-display uppercase tracking-wider">Username</label>
+          <input id="un"
             bind:value={username}
             type="text"
             class="w-full px-3 py-2 text-sm rounded"
@@ -73,8 +73,8 @@
           />
         </div>
         <div>
-          <label class="block text-xs text-muted mb-1 font-display uppercase tracking-wider">Password</label>
-          <input
+          <label for="pw" class="block text-xs text-muted mb-1 font-display uppercase tracking-wider">Password</label>
+          <input id="pw"
             bind:value={password}
             type="password"
             class="w-full px-3 py-2 text-sm rounded"

@@ -1,14 +1,17 @@
 module PgMonitor.Database
 
 open System
+open System.Text
 open Npgsql
 open Npgsql.FSharp
+open System.Collections.Generic
+open System.Threading
 open Models
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /// Lift a Npgsql.FSharp Task-returning query into Async
-let private run (t: System.Threading.Tasks.Task<'a>) = Async.AwaitTask t
+let private run (t: Tasks.Task<'a>) = Async.AwaitTask t
 
 // ── System / IO Metrics ──────────────────────────────────────────────────────
 
@@ -163,7 +166,7 @@ let explainAnalyze (cs: string) (req: ExplainRequest) : Async<ExplainResponse> =
         cmd.CommandText    <- $"EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) {req.Query}"
         cmd.CommandTimeout <- 30
         use! reader = cmd.ExecuteReaderAsync() |> Async.AwaitTask
-        let sb = System.Text.StringBuilder()
+        let sb = StringBuilder()
         while reader.Read() do
             sb.AppendLine(reader.GetString(0)) |> ignore
         return { Plan = sb.ToString(); ExecutionTime = None }
@@ -380,7 +383,7 @@ let runSql (cs: string) (sql: string) : Async<Models.SqlRunResult> =
             use! reader = cmd.ExecuteReaderAsync() |> Async.AwaitTask
             let cols =
                 [ for i in 0 .. reader.FieldCount - 1 -> reader.GetName(i) ]
-            let rows = System.Collections.Generic.List<string list>()
+            let rows = List<string list>()
             while reader.Read() do
                 let row = [ for i in 0 .. reader.FieldCount - 1 ->
                                 if reader.IsDBNull(i) then "NULL"

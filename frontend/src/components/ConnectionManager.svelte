@@ -46,28 +46,28 @@
     <h2 class="font-display text-sm font-semibold text-text mb-3">Add Connection</h2>
     <div class="grid grid-cols-2 gap-3 mb-3">
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-muted font-display">Name</label>
-        <input bind:value={form.name} class="px-3 py-1.5 text-sm rounded" placeholder="e.g. Production" />
+        <label for="n" class="text-xs text-muted font-display">Name</label>
+        <input id="n" bind:value={form.name} class="px-3 py-1.5 text-sm rounded" placeholder="e.g. Production" />
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-muted font-display">Host</label>
-        <input bind:value={form.host} class="px-3 py-1.5 text-sm rounded" />
+        <label for="h" class="text-xs text-muted font-display">Host</label>
+        <input id="h" bind:value={form.host} class="px-3 py-1.5 text-sm rounded" />
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-muted font-display">Port</label>
-        <input bind:value={form.port} type="number" class="px-3 py-1.5 text-sm rounded" />
+        <label for="p" class="text-xs text-muted font-display">Port</label>
+        <input id="p" bind:value={form.port} type="number" class="px-3 py-1.5 text-sm rounded" />
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-muted font-display">Database</label>
-        <input bind:value={form.database} class="px-3 py-1.5 text-sm rounded" />
+        <label for="db" class="text-xs text-muted font-display">Database</label>
+        <input id="db" bind:value={form.database} class="px-3 py-1.5 text-sm rounded" />
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-muted font-display">Username</label>
-        <input bind:value={form.username} class="px-3 py-1.5 text-sm rounded" />
+        <label for="u" class="text-xs text-muted font-display">Username</label>
+        <input id="u" bind:value={form.username} class="px-3 py-1.5 text-sm rounded" />
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-muted font-display">Password</label>
-        <input bind:value={form.password} type="password" class="px-3 py-1.5 text-sm rounded" />
+        <label for="pw" class="text-xs text-muted font-display">Password</label>
+        <input id="pw" bind:value={form.password} type="password" class="px-3 py-1.5 text-sm rounded" />
       </div>
     </div>
     <div class="flex gap-2 items-center">

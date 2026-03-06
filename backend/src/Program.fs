@@ -4,6 +4,7 @@ open System
 open System.Text
 open System.Text.Json
 open System.Text.Json.Serialization
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Authentication.JwtBearer
 open Microsoft.AspNetCore.Http.Json
@@ -20,8 +21,13 @@ let main argv =
 
     // ── Config ────────────────────────────────────────────────────────────────
     let cfg    = builder.Configuration
-    let cs     = let v = cfg["ConnectionStrings:Postgres"] in if isNull v then "Host=localhost;Database=postgres;Username=postgres;Password=postgres" else v
-    let jwtKey = let v = cfg["Jwt:Key"]                    in if isNull v then "super-secret-key-change-in-production-32chars!!" else v
+    let cs     = match cfg["ConnectionStrings:Postgres"] with
+                            | null -> "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=6EaL64EkXfGDmm5wZCE0"
+                            | v -> v
+
+    let jwtKey = match cfg["Jwt:Key"] with
+                            | null -> "super-secret-key-change-in-production-32chars!!"
+                            | v -> v
 
     // ── JSON ──────────────────────────────────────────────────────────────────
     builder.Services.ConfigureHttpJsonOptions(fun opts ->
@@ -52,7 +58,7 @@ let main argv =
                     let path  = ctx.HttpContext.Request.Path
                     if token.Count > 0 && path.StartsWithSegments("/hubs") then
                         ctx.Token <- token[0]
-                    System.Threading.Tasks.Task.CompletedTask
+                    Task.CompletedTask
             )
         ) |> ignore
 
