@@ -22,6 +22,7 @@
       await startHub()
     } catch(e) {
       error = 'Connection failed'
+      console.log(`Connection failed: ${e}`)
     } finally {
       loading = false
     }

@@ -24,13 +24,13 @@
     '/live-queries':  LiveQueries,
     '/slow-queries':  SlowQueries,
     '/sql-editor':    SqlEditor,
-    '/sql-runner':        SqlRunner,
+    '/sql-runner':    SqlRunner,
     '/replication':   Replication,
     '/locks':         Locks,
     '/vacuum':        Vacuum,
     '/alerts':        Alerts,
-    '/users':             UserManagement,
-    '/connections':       ConnectionManager,
+    '/users':         UserManagement,
+    '/connections':   ConnectionManager,
   }
 
   onMount(async () => {

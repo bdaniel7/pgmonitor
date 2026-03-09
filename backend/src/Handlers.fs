@@ -3,6 +3,7 @@ module PgMonitor.Handlers
 open System
 open Microsoft.AspNetCore.Http
 open System.Threading.Tasks
+open Serilog
 open Models
 open Database
 open Alerts
@@ -16,8 +17,10 @@ let loginHandler (cs: string) (secret: string) : Func<LoginRequest, Task<IResult
         let! ok = validateCredentials cs req.Username req.Password
         if ok then
             let! token = generateToken cs req.Username secret
+            Log.Information("Login succeeded for {Username}", req.Username)
             return Results.Ok(token)
         else
+            Log.Warning("Login failed for {Username}", req.Username)
             return Results.Unauthorized()
     })
 
@@ -33,20 +36,24 @@ let createUserHandler (cs: string) : Func<CreateUserRequest, Task<IResult>> =
     Func<CreateUserRequest, Task<IResult>>(fun req -> task {
         try
             let! user = createUser cs req
+            Log.Information("User created: {Username} role={Role}", req.Username, req.Role)
             return Results.Created("/api/users", user)
         with ex ->
+            Log.Error(ex, "Failed to create user {Username}", req.Username)
             return Results.BadRequest({| error = ex.Message |})
     })
 
 let deleteUserHandler (cs: string) : Func<Guid, Task<IResult>> =
     Func<Guid, Task<IResult>>(fun id -> task {
         do! deleteUser cs id
+        Log.Information("User deleted {UserId}", id)
         return Results.NoContent()
     })
 
 let changePasswordHandler (cs: string) : Func<Guid, ChangePasswordRequest, Task<IResult>> =
     Func<Guid, ChangePasswordRequest, Task<IResult>>(fun id req -> task {
         do! changePassword cs id req.NewPassword
+        Log.Information("Password changed for user {UserId}", id)
         return Results.NoContent()
     })
 
@@ -64,20 +71,24 @@ let addConnectionHandler (cs: string) : Func<CreateConnectionRequest, Task<IResu
     Func<CreateConnectionRequest, Task<IResult>>(fun req -> task {
         try
             let! conn = add cs req
+            Log.Information("Connection added: {ConnectionName} -> {Host}/{Database}", req.Name, req.Host, req.Database)
             return Results.Created("/api/connections", {| conn with Password = "***" |})
         with ex ->
+            Log.Error(ex, "Failed to add connection {ConnectionName}", req.Name)
             return Results.BadRequest({| error = ex.Message |})
     })
 
 let deleteConnectionHandler (cs: string) : Func<Guid, Task<IResult>> =
     Func<Guid, Task<IResult>>(fun id -> task {
         do! delete cs id
+        Log.Information("Connection removed {ConnectionId}", id)
         return Results.NoContent()
     })
 
 let testConnectionHandler () : Func<CreateConnectionRequest, Task<IResult>> =
     Func<CreateConnectionRequest, Task<IResult>>(fun req -> task {
         let! ok = testConnection req
+        Log.Information("Connection test {Host}/{Database}: {Result}", req.Host, req.Database, (if ok then "ok" else "failed"))
         return Results.Ok({| ok = ok |})
     })
 
@@ -118,8 +129,10 @@ let explainHandler (cs: string) : Func<ExplainRequest, Task<IResult>> =
     Func<ExplainRequest, Task<IResult>>(fun req -> task {
         try
             let! result = explainAnalyze cs req |> Async.StartAsTask
+            Log.Debug("EXPLAIN ANALYZE executed for query {QueryPreview}", req.Query.[..min 80 (req.Query.Length-1)])
             return Results.Ok(result)
         with ex ->
+            Log.Error(ex, "EXPLAIN ANALYZE failed")
             return Results.BadRequest({| error = ex.Message |})
     })
 
@@ -128,7 +141,13 @@ let explainHandler (cs: string) : Func<ExplainRequest, Task<IResult>> =
 let sqlRunHandler (primaryCs: string) : Func<SqlRunRequest, Task<IResult>> =
     Func<SqlRunRequest, Task<IResult>>(fun req -> task {
         let targetCs = ConnectionStore.resolve primaryCs req.ConnectionId
-        let! result  = runSql targetCs req.Sql |> Async.StartAsTask
+        let connLabel = req.ConnectionId |> Option.map string |> Option.defaultValue "primary"
+        Log.Information("SQL executed on {Connection}: {QueryPreview}",
+            connLabel, req.Sql.[..min 120 (req.Sql.Length-1)])
+        let! result = runSql targetCs req.Sql |> Async.StartAsTask
+        match result.Error with
+        | Some err -> Log.Warning("SQL error on {Connection}: {Error}", connLabel, err)
+        | None     -> Log.Debug("SQL returned {RowCount} rows in {ElapsedMs}ms", result.RowCount, result.ExecutionTimeMs)
         return Results.Ok(result)
     })
 
@@ -174,17 +193,20 @@ let addAlertRuleHandler (cs: string) : Func<AlertRule, Task<IResult>> =
     Func<AlertRule, Task<IResult>>(fun rule -> task {
         let r = { rule with Id = Guid.NewGuid() }
         do! addRule cs r
+        Log.Information("Alert rule created: {RuleName} metric={Metric} threshold={Threshold}", r.Name, r.Metric, r.Threshold)
         return Results.Created("/api/alerts/rules", r)
     })
 
 let deleteAlertRuleHandler (cs: string) : Func<Guid, Task<IResult>> =
     Func<Guid, Task<IResult>>(fun id -> task {
         do! deleteRule cs id
+        Log.Information("Alert rule deleted {RuleId}", id)
         return Results.NoContent()
     })
 
 let acknowledgeAlertHandler (cs: string) : Func<Guid, Task<IResult>> =
     Func<Guid, Task<IResult>>(fun id -> task {
         do! acknowledgeAlert cs id
+        Log.Information("Alert acknowledged {AlertId}", id)
         return Results.Ok()
     })
