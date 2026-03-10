@@ -1,12 +1,15 @@
 module PgMonitor.Program
 
 open System
+open System.IO
+open System.Security.Cryptography.X509Certificates
 open System.Text
 open System.Text.Json
 open System.Text.Json.Serialization
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Authentication.JwtBearer
+open Microsoft.AspNetCore.DataProtection
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Json
 open Microsoft.Extensions.DependencyInjection
@@ -85,6 +88,50 @@ let main argv =
             |> ignore
         ) |> ignore
 
+        // ── Data Protection ───────────────────────────────────────────────────
+        // Keys are persisted to the filesystem so they survive restarts.
+        // On Debian/Docker the directory is /var/lib/pgmonitor/keys;
+        // for local dev it falls back to ~/.pgmonitor/keys.
+        let keysDir =
+            let linuxPath = match cfg["App:DpKeysPath"] with
+                                  | null -> "/var/lib/pgmonitor/keys"
+                                  | path -> path
+
+            if Directory.Exists("/var/lib") then linuxPath
+            else Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".pgmonitor", "keys")
+        Directory.CreateDirectory(keysDir) |> ignore
+        Log.Information("Data Protection keys → {KeysDir}", keysDir)
+
+        // Load or generate the certificate used to encrypt persisted keys.
+        // The PFX is stored in the same directory as the keys and reused on
+        // every startup — generating a new one would invalidate all existing keys.
+        let dpCert =
+            let certPath = Path.Combine(keysDir, "dp-cert.pfx")
+            let pfxPassword = "pgmonitor-dp"
+            if File.Exists(certPath) then
+                Log.Information("Loading existing Data Protection certificate")
+                X509CertificateLoader.LoadPkcs12FromFile(certPath, pfxPassword)
+            else
+                Log.Information("Generating new Data Protection certificate")
+                use rsa = System.Security.Cryptography.RSA.Create(2048)
+                let req =
+                    CertificateRequest(
+                        "CN=pgmonitor-dataprotection",
+                        rsa,
+                        System.Security.Cryptography.HashAlgorithmName.SHA256,
+                        System.Security.Cryptography.RSASignaturePadding.Pkcs1)
+                let cert = req.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddYears(10))
+                let pfxBytes = cert.Export(X509ContentType.Pfx, pfxPassword)
+                File.WriteAllBytes(certPath, pfxBytes)
+                X509CertificateLoader.LoadPkcs12(pfxBytes, pfxPassword)
+
+        builder.Services
+            .AddDataProtection()
+            .PersistKeysToFileSystem(DirectoryInfo(keysDir))
+            .ProtectKeysWithCertificate(dpCert)
+            .SetApplicationName("pgmonitor")
+        |> ignore
+
         // ── JSON ──────────────────────────────────────────────────────────────────
         builder.Services.ConfigureHttpJsonOptions(fun opts ->
             opts.SerializerOptions.Converters.Add(JsonStringEnumConverter())
@@ -93,6 +140,7 @@ let main argv =
 
         builder.Services.Configure<JsonOptions> (fun (opts: JsonOptions) ->
             opts.SerializerOptions.Converters.Add(AlertSeverityConverter())) |> ignore
+
 
         // ── JWT Auth ──────────────────────────────────────────────────────────────
         builder.Services

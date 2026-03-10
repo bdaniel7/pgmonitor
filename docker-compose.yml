@@ -50,6 +50,8 @@ services:
         - ./backend/.env.production
     ports:
       - "4000:4000"
+    volumes:
+      - dpkeys:/var/lib/pgmonitor/keys
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,3 +71,4 @@ services:
 volumes:
   pgdata:
   seqdata:
+  dpkeys:
