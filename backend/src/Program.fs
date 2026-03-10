@@ -55,16 +55,20 @@ let main argv =
         // ── Config ────────────────────────────────────────────────────────────────
         let cfg    = builder.Configuration
         let cs     = match cfg["ConnectionStrings:Postgres"] with
-                                | null -> "Host=postgres-db;Port=5432;Database=postgres;Username=postgres;Password=6EaL64EkXfGDmm5wZCE0"
-                                | v -> v
+                            | null -> raise (ApplicationException("ConnectionStrings:Postgres is missing from appsettings.json!"))
+                            | v -> v
 
         let jwtKey = match cfg["Jwt:Key"] with
-                                | null -> "super-secret-key-change-in-production-32chars!!"
-                                | v -> v
+                            | null -> raise (ApplicationException("Jwt:Key is missing from appsettings.json!"))
+                            | v -> v
 
         let seqUrl = match cfg["Seq:Url"] with
-                         | null -> "http://localhost:5341"
-                         | v    -> v
+                           | null -> "http://localhost:5341"
+                           | v -> v
+
+        let corsOrigins = match cfg["App:CorsOrigins"] with
+                               | null -> [|"http://localhost:5173"; "http://localhost:4173"|]
+                               | v -> v.Split(",")
 
         // ── Serilog full configuration ────────────────────────────────────────
         builder.Host.UseSerilog(fun ctx _ logCfg ->
@@ -124,8 +128,7 @@ let main argv =
         // ── CORS ──────────────────────────────────────────────────────────────────
         builder.Services.AddCors(fun o ->
             o.AddDefaultPolicy(fun p ->
-                p.WithOrigins("http://localhost:5173", "http://localhost:4173",
-                              "http://frontend:5173", "http://frontend:4173")
+                p.WithOrigins(corsOrigins)
                  .AllowAnyHeader()
                  .AllowAnyMethod()
                  .AllowCredentials() |> ignore)

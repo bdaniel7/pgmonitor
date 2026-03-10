@@ -22,6 +22,7 @@
     <Content Include="Dockerfile" />
     <Content Include=".env" />
     <Content Include="post_login.http" />
+    <Content Include=".env.production" />
   </ItemGroup>
 
   <ItemGroup>

@@ -79,7 +79,7 @@ let getActiveQueries (cs: string) : Async<ActiveQuery list> =
             |> Sql.query """
                 SELECT
                     pid,
-                    usename,
+                    COALESCE(usename, 'empty') AS usename,
                     datname,
                     state,
                     query,
@@ -257,7 +257,7 @@ let getLocks (cs: string) : Async<LockInfo list> =
             |> Sql.query """
                 SELECT
                     l.pid,
-                    a.usename,
+                    COALESCE(a.usename, 'empty') AS usename,
                     a.query,
                     l.locktype,
                     c.relname,
