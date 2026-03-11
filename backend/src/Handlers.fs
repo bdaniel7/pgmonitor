@@ -6,7 +6,6 @@ open System.Threading.Tasks
 open Serilog
 open Models
 open Database
-open Alerts
 open Auth
 open ConnectionStore
 
@@ -184,29 +183,29 @@ let tableBloatHandler (cs: string) : Func<Task<IResult>> =
 // ── Alerts ────────────────────────────────────────────────────────────────────
 
 let alertRulesHandler () : Func<IResult> =
-    Func<IResult>(fun () -> Results.Ok(getRules()))
+    Func<IResult>(fun () -> Results.Ok(Alerts.getRules()))
 
 let alertsHandler () : Func<IResult> =
-    Func<IResult>(fun () -> Results.Ok(getAlerts()))
+    Func<IResult>(fun () -> Results.Ok(Alerts.getAlerts()))
 
 let addAlertRuleHandler (cs: string) : Func<AlertRule, Task<IResult>> =
     Func<AlertRule, Task<IResult>>(fun rule -> task {
         let r = { rule with Id = Guid.NewGuid() }
-        do! addRule cs r
+        do! Alerts.addRule cs r
         Log.Information("Alert rule created: {RuleName} metric={Metric} threshold={Threshold}", r.Name, r.Metric, r.Threshold)
         return Results.Created("/api/alerts/rules", r)
     })
 
 let deleteAlertRuleHandler (cs: string) : Func<Guid, Task<IResult>> =
     Func<Guid, Task<IResult>>(fun id -> task {
-        do! deleteRule cs id
+        do! Alerts.deleteRule cs id
         Log.Information("Alert rule deleted {RuleId}", id)
         return Results.NoContent()
     })
 
 let acknowledgeAlertHandler (cs: string) : Func<Guid, Task<IResult>> =
     Func<Guid, Task<IResult>>(fun id -> task {
-        do! acknowledgeAlert cs id
+        do! Alerts.acknowledgeAlert cs id
         Log.Information("Alert acknowledged {AlertId}", id)
         return Results.Ok()
     })

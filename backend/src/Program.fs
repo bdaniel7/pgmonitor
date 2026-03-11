@@ -69,10 +69,6 @@ let main argv =
                            | null -> "http://localhost:5341"
                            | v -> v
 
-        let corsOrigins = match cfg["App:CorsOrigins"] with
-                               | null -> [|"http://localhost:5173"; "http://localhost:4173"|]
-                               | v -> v.Split(",")
-
         // ── Serilog full configuration ────────────────────────────────────────
         builder.Host.UseSerilog(fun ctx _ logCfg ->
             logCfg
@@ -173,7 +169,18 @@ let main argv =
         // ── SignalR ───────────────────────────────────────────────────────────────
         builder.Services.AddSignalR() |> ignore
 
+        // ── Health checks ─────────────────────────────────────────────────────
+        builder.Services
+            .AddHealthChecks()
+            .AddNpgSql(cs, name = "postgres", tags = [| "db" |])
+        |> ignore
+
         // ── CORS ──────────────────────────────────────────────────────────────────
+
+        let corsOrigins = match cfg["App:CorsOrigins"] with
+                               | null -> [|"http://localhost"|]
+                               | v -> v.Split(",", StringSplitOptions.RemoveEmptyEntries ||| StringSplitOptions.TrimEntries)
+
         builder.Services.AddCors(fun o ->
             o.AddDefaultPolicy(fun p ->
                 p.WithOrigins(corsOrigins)
@@ -240,6 +247,9 @@ let main argv =
 
         // SignalR hub
         app.MapHub<MonitorHub>("/hubs/monitor") |> ignore
+
+        // Health checks — public, no auth required
+        app.MapHealthChecks("/healthz") |> ignore
 
         // ── Background broadcast loop ─────────────────────────────────────────────
         let hub = app.Services.GetRequiredService<IHubContext<MonitorHub>>()

@@ -1,4 +1,31 @@
+networks:
+  pgm:
+    driver: bridge
 services:
+  traefik:
+      image: traefik:v3
+      user: root
+      command:
+        - "--api.dashboard=true"
+        - "--api.insecure=true"
+        - "--providers.docker=true"
+        - "--providers.docker.exposedbydefault=false"
+        - "--providers.docker.network=pgm"           # always route via the pgm network
+        - "--providers.docker.watch=true"            # pick up scale events immediately
+        - "--entrypoints.web.address=:80"
+        - "--ping=true"                              # enables GET /ping for the healthcheck
+      ports:
+        - "80:80"       # HTTP ingress  →  http://localhost
+        - "8090:8080"   # Traefik dashboard  →  http://localhost:8090
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock         # Linux only
+      networks:
+        - pgm
+      healthcheck:
+        test:     ["CMD-SHELL", "wget -qO- http://localhost:8080/ping || exit 1"]
+        interval: 10s
+        timeout:  5s
+        retries:  3
   postgres:
     image: postgres:18
     container_name: postgres-db
@@ -16,6 +43,8 @@ services:
       -c track_io_timing=on
     volumes:
       - pgdata:/var/lib/postgresql/18/data
+    networks:
+      - pgm
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -34,6 +63,8 @@ services:
       - "8080:80"     # Seq UI  →  http://seq:8080
     volumes:
       - seqdata:/data
+    networks:
+      - pgm
     healthcheck:
       test:     ["CMD-SHELL", "curl -sf http://seq/api || exit 1"]
       interval: 10s
@@ -44,29 +75,59 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    hostname: backend
+#    hostname: backend
     env_file:
         - ./backend/.env
         - ./backend/.env.production
-    ports:
-      - "4000:4000"
     volumes:
       - dpkeys:/var/lib/pgmonitor/keys
+    networks:
+      - pgm
+    healthcheck:
+      test:     ["CMD-SHELL", "curl -sf http://localhost:4000/healthz || exit 1"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+      start_period: 15s
     depends_on:
       postgres:
         condition: service_healthy
       seq:
         condition: service_healthy
+      traefik:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      # Route /api and /hubs to this service
+      - "traefik.http.routers.backend.rule=PathPrefix(`/api`) || PathPrefix(`/hubs`)"
+      - "traefik.http.routers.backend.entrypoints=web"
+      - "traefik.http.routers.backend.priority=10"
+      - "traefik.http.services.backend.loadbalancer.server.port=4000"
+      # Let Traefik respect the /healthz endpoint before sending traffic
+      - "traefik.http.services.backend.loadbalancer.healthcheck.path=/healthz"
+      - "traefik.http.services.backend.loadbalancer.healthcheck.interval=10s"
+      - "traefik.http.services.backend.loadbalancer.healthcheck.timeout=3s"
+      # Sticky sessions — keeps SignalR connections on the same backend instance
+      - "traefik.http.services.backend.loadbalancer.sticky.cookie=true"
+      - "traefik.http.services.backend.loadbalancer.sticky.cookie.name=pgm_instance"
+      - "traefik.http.services.backend.loadbalancer.sticky.cookie.httponly=true"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    hostname: frontend
-    ports:
-      - "4173:4173"
+    networks:
+      - pgm
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      # Catch-all — lower priority than backend so /api and /hubs win
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.routers.frontend.priority=1"
+      - "traefik.http.services.frontend.loadbalancer.server.port=4173"
 
 volumes:
   pgdata:

@@ -1,4 +1,4 @@
-### POST request to example server
+### POST login
 POST http://localhost:4173/api/auth/login/
 Content-Type: application/json
 
@@ -6,4 +6,8 @@ Content-Type: application/json
   "username": "admin",
   "password": "admin123"
 }
+###
+### GET /healthz
+GET http://localhost:5000/healthz
+Accept: application/json
 ###
