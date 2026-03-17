@@ -50,6 +50,7 @@ let init (cs: string) : Async<unit> =
                 resolved_at  TIMESTAMPTZ,
                 acknowledged BOOLEAN     NOT NULL DEFAULT false
             );
+
         """
 
         use conn = new Npgsql.NpgsqlConnection(cs)
@@ -58,6 +59,23 @@ let init (cs: string) : Async<unit> =
         cmd.CommandText <- ddl
         let! _ = cmd.ExecuteNonQueryAsync() |> Async.AwaitTask
         ()
+
+
+        let enable_pg_st = """
+            -- Enable pg_stat_statements
+            SELECT pg_reload_conf();
+
+            -- Create the extension
+            CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+        """
+
+        use conn_ = new Npgsql.NpgsqlConnection(cs)
+        do! conn_.OpenAsync() |> Async.AwaitTask
+        use cmd  = conn_.CreateCommand()
+        cmd.CommandText <- enable_pg_st
+        let! _ = cmd.ExecuteNonQueryAsync() |> Async.AwaitTask
+        ()
+
 
         // ── Seed default users if the table is empty ──────────────────────────
         let! count =
